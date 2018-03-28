@@ -1,0 +1,126 @@
+﻿USE report
+go
+
+-- 1. Acquired donor 
+-- 1-1. New Acquired donor for last month
+SELECT
+	'Actual' AS [Comparison], 
+	'Korea' AS [Region],	
+	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [year],				-- the year of last month
+	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [month],				-- last month
+	CONVERT(datetime2, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [Date],	-- the first day of last month
+	D.회원번호 AS [ConstituentID],
+	CASE 
+	WHEN D.가입경로=N'거리모집' THEN 'Direct Dialogue'
+	WHEN D.가입경로=N'인터넷/홈페이지' THEN 'Web'
+	WHEN D.가입경로=N'Lead Conversion' THEN D.가입경로
+	ELSE 'Others'
+	END AS [Source],
+	CASE 
+	WHEN D.소속 != 'Inhouse' THEN 'Agency'
+	ELSE 'Inhouse'
+	END AS [Sub-source],
+	CASE
+	WHEN D.최초등록구분=N'정기' THEN 'Regular'
+	WHEN D.최초등록구분=N'일시' THEN 'One-off'
+	END AS [Income type],
+	1 AS [NewDonor_Actual]
+FROM
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
+WHERE	-- donors whose first payment is last month
+	D.최초납부년월 = SUBSTRING(CONVERT(varchar(10), DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126), 1, 7)
+
+
+-- 1-2. Reactivation for last month
+SELECT
+	'Actual' AS [Comparison], 
+	'Korea' AS [Region],	
+	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [year],				-- the year of last month
+	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [month],				-- last month
+	CONVERT(datetime2, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [Date],	-- the first day of last month
+	A.회원번호 AS [ConstituentID],
+	'Reactivation' AS [Source],
+	'Agency' AS [Resource],
+	'Regular' AS [Type],
+	1 AS [NewDonor_Actual]
+FROM
+	(
+	SELECT
+		H.회원번호, MIN(PR.납부일) 첫결제일
+	FROM
+		(
+		SELECT
+			회원번호, 참고일 AS 가입일
+		FROM
+			MRMRT.그린피스동아시아서울사무소0868.DBO.UV_GP_관리기록
+		WHERE
+			기록분류=N'TM_후원재시작'
+			AND 기록분류상세=N'통성-재시작동의'
+		) H
+	LEFT JOIN
+		MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_결제정보 PR
+	ON	
+		H.회원번호 = PR.회원번호
+	WHERE
+		PR.납부일 >= H.가입일
+	GROUP BY
+		H.회원번호
+	) A
+WHERE	-- donors whose first payment is last month since they agreed to donate again 
+	첫결제일 >= CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126)
+	AND 첫결제일 < CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
+
+
+-- Lapsed donor for last month
+SELECT
+	'Actual' AS [Comparison], 
+	'Korea' AS [Region],	
+	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [year],				-- the year of last month
+	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [month],				-- last month
+	CONVERT(datetime2, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [Date],	-- the first day of last month
+	D.회원번호 AS [ConstituentID],
+	'Lapsed' AS [Source],
+	'Lapsed' AS [Resource],
+	CASE
+	WHEN D.최초등록구분=N'정기' THEN 'Regular'
+	WHEN D.최초등록구분=N'일시' THEN 'One-off'
+	END AS [Type],
+	-1 AS [NewDonor_Actual]
+FROM
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
+WHERE	 -- donors whose last payment was before 13 months 
+	D.최종납부년월 = SUBSTRING(CONVERT(varchar(10), DATEADD(month, -12, GETDATE()), 126), 1, 7) 
+
+
+-- Current donor for last month
+SELECT
+	'Actual' AS [Comparison], 
+	'Korea' AS [Region],	
+	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [year],				-- the year of last month
+	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [month],				-- last month
+	CONVERT(datetime2, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS [Date],	-- the first day of last month
+	D.회원번호 AS [ConstituentID],
+	'Current' AS [Source],
+	'Current' AS [Resource],
+	CASE
+	WHEN D.최초등록구분=N'정기' THEN 'Regular'
+	WHEN D.최초등록구분=N'일시' THEN 'One-off'
+	END AS [Type],
+	1 AS [NewDonor_Actual]
+FROM
+	(
+	SELECT
+		회원번호
+	FROM
+		MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_결제정보
+	WHERE
+		환불상태 != N'전액환불'  -- donors whose last payment is within a year but not ones whose first payment is this month
+		AND 납부일 >= CONVERT(DATE, DATEADD(yy, DATEDIFF(yy, 0, GETDATE())-1, 0), 126) 
+		AND 납부일 < CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
+	GROUP BY
+		회원번호
+	) PR
+LEFT JOIN
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
+ON
+	PR.회원번호 = D.회원번호

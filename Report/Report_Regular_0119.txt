@@ -1,0 +1,69 @@
+﻿SELECT
+	'Korea' AS Region,
+	NULL AS OpportunityID,
+	NULL AS RGID, 
+	PMAX.회원코드 AS ConstituentID, 
+	Year(PMAX.출금일최대값) AS [DebitYear], 
+	Month(PMAX.출금일최대값) AS [DebitMonth],
+	--'Nov' AS [DebitMonth],
+	PMAX.출금일최대값 AS [DebitDate], 
+		CASE 
+	WHEN 처리결과 like N'출금%' THEN CMS.신청금액
+	ELSE CRD.신청금액
+	END AS Amount, 
+	CASE
+	WHEN 처리결과 like N'%실패%' THEN 0
+	ELSE 1
+	END AS Success,
+	NULL AS RGJoinDate,
+	CASE
+	WHEN S.가입경로=N'거리모집' THEN 'DDC-'+ S.소속
+	WHEN S.가입경로=N'Lead Conversion' THEN S.가입경로
+	WHEN S.가입경로=N'인터넷/홈페이지' THEN 'Web'
+	ELSE 'Others'
+	END AS [Programme],
+	CASE
+	WHEN S.가입경로=N'거리모집' AND S.소속!='Inhouse' THEN 'Agency'
+	ELSE 'Inhouse'
+	END AS [Resource],
+	'Korea' AS [Team]
+FROM
+(
+	SELECT
+		회원코드,
+		MAX(출금일) AS 출금일최대값
+	FROM
+	(
+		SELECT
+			 회원코드,
+			 CONVERT(datetime, 출금일) AS 출금일
+		FROM
+			MRMRT.그린피스동아시아서울사무소0868.DBO.UV_GP_CMS결제결과
+		WHERE			
+			CONVERT(date, 출금일, 126) >= CONVERT(date, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126)
+			AND CONVERT(date, 출금일, 126) < CONVERT(date, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
+		UNION ALL
+		SELECT
+			 회원코드,
+			 CONVERT(datetime, 출금일) AS 출금일
+		FROM
+			MRMRT.그린피스동아시아서울사무소0868.DBO.UV_GP_신용카드결제결과
+		WHERE
+			CONVERT(date, 출금일, 126) >= CONVERT(date, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126)
+			AND CONVERT(date, 출금일, 126) < CONVERT(date, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
+	) PRES
+	GROUP BY
+		회원코드
+) PMAX
+LEFT JOIN
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_CMS결제결과 CMS
+ON 
+	PMAX.회원코드 = CMS.회원코드 AND PMAX.출금일최대값 = CMS.출금일
+LEFT JOIN
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_신용카드결제결과 CRD
+ON 
+	PMAX.회원코드 = CRD.회원코드 AND PMAX.출금일최대값 = CRD.출금일
+LEFT JOIN
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 S
+ON 
+	PMAX.회원코드 = S.회원번호
