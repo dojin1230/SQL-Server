@@ -110,7 +110,7 @@ WHERE
 	AND D.최종납부년월 <= SUBSTRING(CONVERT(varchar(10), DATEADD(month, -7, GETDATE()), 126), 1, 7)	-- 미납납부한 지 6개월 이상인 사람만
 	AND D.최초등록구분 = N'정기'																		-- 최초등록구분이 정기인 사람만
 	AND D.휴대전화번호='유'																			-- 휴대전화번호가 있는 사람만
-	AND D.회원상태 ='Freezing'																		-- 회원상태가 canceled거나 freezing인 사람만
+	AND D.회원상태 in ('Freezing', 'canceled')														-- 회원상태가 canceled거나 freezing인 사람만
 	AND CR.회원번호 is null																			-- 통화반응이 1번인 사람 제외
 	AND RS.회원번호 is null																			-- 2017년부터 후원재시작 콜 동의 혹은 거부한 사람 제외
 	AND UN.회원번호 is null																			-- 결번인 사람 제외

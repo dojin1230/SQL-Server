@@ -138,7 +138,7 @@ WHERE
 INSERT INTO [report].[dbo].[supporter_ALC]
 SELECT
 	'Actual' AS [Comparison], 
-	'South Korea' AS [Region],	
+	'Korea' AS [Region],	
 	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Year],				-- the year of this month
 	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Month],			-- this month
 	CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Date],	-- the first day of this month
@@ -168,7 +168,7 @@ WHERE	-- donors whose first payment is this month
 INSERT INTO [report].[dbo].[supporter_ALC]
 SELECT
 	'Actual' AS [Comparison], 
-	'South Korea' AS [Region],	
+	'Korea' AS [Region],	
 	Year(DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Year],				-- the year of this month
 	Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Month],			-- this month
 	CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS [Date],	-- the first day of this month

@@ -33,7 +33,7 @@ LEFT JOIN
 (SELECT T1.회원번호
 FROM
   (
-  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 일련번호 DESC) AS ROWN, *
+  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 신청일 DESC) AS ROWN, *
   FROM
   (SELECT A.*
   FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보 A
@@ -48,7 +48,7 @@ FROM
   ) T1
 CROSS JOIN
   (
-  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 일련번호 DESC) AS ROWN, *
+  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 신청일 DESC) AS ROWN, *
   FROM
   (SELECT A.*
   FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보 A
@@ -63,7 +63,7 @@ CROSS JOIN
   ) T2
 WHERE
   T1.회원번호 = T2.회원번호
-  AND T1.일련번호 > T2.일련번호
+  AND T1.신청일 > T2.신청일
   AND T1.금액 > T2.금액
   AND T1.ROWN = 1
   AND T1.시작년월 >= CONVERT(VARCHAR(7), GETDATE()-30, 126)

@@ -152,5 +152,5 @@ ON
 WHERE
 	ALC.Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
 	AND ALC.[Year]=2018
-	--AND ALC.Month in (1,2) -----------------저번달 걸로 고칠 것
+	AND ALC.Month in (1,2) -----------------저번달 걸로 고칠 것
 	AND F.[Payment year] = 2018

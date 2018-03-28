@@ -254,4 +254,3 @@ WHERE
 	AND H.기록분류상세 like '%canceled%'
 	AND H.참고일 >= DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)
 	AND H.참고일 < DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
-
