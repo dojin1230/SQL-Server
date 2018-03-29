@@ -2,7 +2,7 @@
 -- 3주된 감사콜 마감 --
 
 -- 1. 후원동의 --
-SELECT *
+SELECT '1. 후원동의:', H.회원번호
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -18,10 +18,10 @@ WHERE H.기록분류상세 = '통성-후원동의'
 	AND CONVERT(DATE,기록일시) = CONVERT(DATE, GETDATE()-21)
 	AND D.회원번호 IS NULL
 
-
+UNION ALL
 -- 2. 후원거절(해지) --
 
-SELECT *
+SELECT '2. 후원거절(해지):', H.회원번호
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -35,9 +35,10 @@ WHERE H.기록분류상세 = '통성-후원거절(해지)'
 	AND CONVERT(DATE,H.기록일시) = CONVERT(DATE, GETDATE()-21)
 	AND H2.회원번호 IS NULL
 
+UNION ALL
 
 -- 3. 결번 --
-SELECT *
+SELECT '3. 결번:', H.회원번호
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -55,10 +56,10 @@ WHERE H.기록분류상세 = '결번'
 	AND CONVERT(DATE,기록일시) = CONVERT(DATE, GETDATE()-21)
 	AND D.회원번호 IS NULL
 
-
+UNION ALL
 -- 4. SK-진행건 마감 (프리징 필요건 확인) -- 
 
-SELECT *
+SELECT '4. 프리징:', H.회원번호
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
