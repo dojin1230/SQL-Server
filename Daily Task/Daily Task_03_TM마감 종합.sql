@@ -1,208 +1,208 @@
---TM ���� ���� 
+﻿--TM 마감 종합 
 
---1. �ſ�ī�� - ���浿��: �ֱٽ��� Ȯ��
---2. ���� - ���׼���: ���� Ȯ��
---3. ����(����): ���� Ȯ�� (Ȥ�� ĵ�� ���)
---4. ����۵���: ��� Ȯ��/�������� �űԵ�� or �����ڷ��� Ȯ��
---5. �簳����: ��� Ȯ��
---6. �������� - ��� ��/�ֱٳ��� ����: ����¡ Ȯ��
---7. ���� - �Ŀ����� ���οϷ�/�űԿϷ�/�����ڷ���Ȯ��
+--1. 신용카드 - 변경동의: 최근승인 확인
+--2. 증액 - 증액성공: 증액 확인
+--3. 거절(해지): 해지 확인 (혹은 캔슬 기록)
+--4. 재시작동의: 노멀 확인/결제정보 신규등록 or 증빙자료등록 확인
+--5. 재개동의: 노멀 확인
+--6. 결제실패 - 결번 등/최근납부 정보: 프리징 확인
+--7. 감사 - 후원동의 승인완료/신규완료/증빙자료등록확인
 
--- 1. �뼺-���浿�� - �ֱٽ��� Ȯ�� --
+-- 1. 통성-변경동의 - 최근승인 확인 --
 
 
 SELECT H.*
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-(SELECT ȸ����ȣ, ������
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�ſ�ī���������
-WHERE CONVERT(DATE,������) >= CONVERT(DATE,GETDATE() - 3)) CA
-ON H.ȸ����ȣ = CA.ȸ����ȣ
+(SELECT 회원번호, 승인일
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_신용카드승인정보
+WHERE CONVERT(DATE,승인일) >= CONVERT(DATE,GETDATE() - 3)) CA
+ON H.회원번호 = CA.회원번호
 WHERE
-��Ϻз��� IN ('�뼺-���浿��')
-AND CONVERT(DATE,������) >= CONVERT(DATE,GETDATE() - 3)
-AND CA.ȸ����ȣ IS NULL
+기록분류상세 IN ('통성-변경동의')
+AND CONVERT(DATE,참고일) >= CONVERT(DATE,GETDATE() - 3)
+AND CA.회원번호 IS NULL
 
 
 
--- 2. ���� ���� �ߴµ� ������ ���ܿ� ���� ȸ�� --
+-- 2. 증액 성공 했는데 증액자 명단에 없는 회원 --
 
 SELECT H.*
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-(SELECT T1.ȸ����ȣ
+(SELECT T1.회원번호
 FROM
   (
-  SELECT ROW_NUMBER() OVER(PARTITION BY ȸ����ȣ ORDER BY ��û�� DESC) AS ROWN, *
+  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 신청일 DESC) AS ROWN, *
   FROM
   (SELECT A.*
-  FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ������ݾ����� A
+  FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보 A
   LEFT JOIN
-  (SELECT ȸ����ȣ
-  FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ������ݾ�����
-  GROUP BY ȸ����ȣ
-  HAVING COUNT(ȸ����ȣ) > 1) B
-  ON A.ȸ����ȣ = B.ȸ����ȣ
-  WHERE A.���۳�� != A.������
-  AND B.ȸ����ȣ IS NOT NULL) C -- ���� �ݾ� ���۳�� ������ �ٸ��ǵ� �� ���ΰǼ� �� �̻��� ȸ���� ����
+  (SELECT 회원번호
+  FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보
+  GROUP BY 회원번호
+  HAVING COUNT(회원번호) > 1) B
+  ON A.회원번호 = B.회원번호
+  WHERE A.시작년월 != A.종료년월
+  AND B.회원번호 IS NOT NULL) C -- 약정 금액 시작년월 종료년월 다른건들 중 납부건수 둘 이상인 회원의 약정
   ) T1
 CROSS JOIN
   (
-  SELECT ROW_NUMBER() OVER(PARTITION BY ȸ����ȣ ORDER BY ��û�� DESC) AS ROWN, *
+  SELECT ROW_NUMBER() OVER(PARTITION BY 회원번호 ORDER BY 신청일 DESC) AS ROWN, *
   FROM
   (SELECT A.*
-  FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ������ݾ����� A
+  FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보 A
   LEFT JOIN
-  (SELECT ȸ����ȣ
-  FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ������ݾ�����
-  GROUP BY ȸ����ȣ
-  HAVING COUNT(ȸ����ȣ) > 1) B
-  ON A.ȸ����ȣ = B.ȸ����ȣ
-  WHERE A.���۳�� != A.������
-  AND B.ȸ����ȣ IS NOT NULL) C -- ���� �ݾ� ���۳�� ������ �ٸ��ǵ� �� ���ΰǼ� �� �̻��� ȸ���� ����
+  (SELECT 회원번호
+  FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보
+  GROUP BY 회원번호
+  HAVING COUNT(회원번호) > 1) B
+  ON A.회원번호 = B.회원번호
+  WHERE A.시작년월 != A.종료년월
+  AND B.회원번호 IS NOT NULL) C -- 약정 금액 시작년월 종료년월 다른건들 중 납부건수 둘 이상인 회원의 약정
   ) T2
 WHERE
-  T1.ȸ����ȣ = T2.ȸ����ȣ
-  AND T1.��û�� > T2.��û��
-  AND T1.�ݾ� > T2.�ݾ�
+  T1.회원번호 = T2.회원번호
+  AND T1.신청일 > T2.신청일
+  AND T1.금액 > T2.금액
   AND T1.ROWN = 1
-  AND T1.���۳�� >= CONVERT(VARCHAR(7), GETDATE()-30, 126)
+  AND T1.시작년월 >= CONVERT(VARCHAR(7), GETDATE()-30, 126)
   AND T2.ROWN = 2) T3
-ON H.ȸ����ȣ = T3.ȸ����ȣ
-WHERE ��Ϻз��� = '�뼺-���׼���'
-AND ������ >= CONVERT(DATE,GETDATE() - 4)
-AND T3.ȸ����ȣ IS NULL
+ON H.회원번호 = T3.회원번호
+WHERE 기록분류상세 = '통성-증액성공'
+AND 참고일 >= CONVERT(DATE,GETDATE() - 4)
+AND T3.회원번호 IS NULL
 
 
--- 3. ��������� ~����(����)�ε� ĵ�� ����� ���� ȸ�� --
+-- 3. 관리기록이 ~거절(해지)인데 캔슬 기록이 없는 회원 --
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT *
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�������
-	 WHERE ��Ϻз� = 'cancellation'
-	 AND ������ >= CONVERT(DATE, GETDATE()-45)
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록
+	 WHERE 기록분류 = 'cancellation'
+	 AND 참고일 >= CONVERT(DATE, GETDATE()-45)
 	 ) H2
-ON H.ȸ����ȣ = H2.ȸ����ȣ
-WHERE H.��Ϻз��� LIKE '%(����)'
-  AND CONVERT(varchar(10),H.������) BETWEEN CONVERT(DATE, GETDATE()-45) AND CONVERT(DATE, GETDATE() - 2)  -- ������ 45�� �̳� ��Ʋ ���� ��� 
-  AND H2.ȸ����ȣ IS NULL
+ON H.회원번호 = H2.회원번호
+WHERE H.기록분류상세 LIKE '%(해지)'
+  AND CONVERT(varchar(10),H.참고일) BETWEEN CONVERT(DATE, GETDATE()-45) AND CONVERT(DATE, GETDATE() - 2)  -- 참고일 45일 이내 이틀 지난 기록 
+  AND H2.회원번호 IS NULL
   
 
---4. ����۵���: ��� Ȯ��
+--4. 재시작동의: 노멀 확인
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
-	 WHERE ȸ������ = 'Normal') D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� LIKE '%����۵���'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE 회원상태 = 'Normal') D	 
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재시작동의'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
 
--- ����۵��� �������� ���� Ȯ�� -- 
+-- 재시작동의 결제정보 상태 확인 -- 
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
-	 WHERE (���ι�� = '�ſ�ī��' AND CARD���� = '���οϷ�')
-		OR (���ι�� = 'CMS' AND CMS���� IN ('�űԿϷ�','�ű�����', '��������', '�����Ϸ�', '�������'))
-		OR (CMS���� = '�űԴ��' AND CMS�����ڷ����ʿ� = 'N')
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE (납부방법 = '신용카드' AND CARD상태 = '승인완료')
+		OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료','신규진행', '수정진행', '수정완료', '수정대기'))
+		OR (CMS상태 = '신규대기' AND CMS증빙자료등록필요 = 'N')
 	 ) D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� LIKE '%����۵���'
-	AND H.ó��������� != 'SK-����'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재시작동의'
+	AND H.처리진행사항 != 'SK-지연'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
--- ����۵��� �������� �űԵ�� or �����ڷ��� Ȯ�� --
+-- 재시작동의 결제정보 신규등록 or 증빙자료등록 확인 --
 
---5. �簳����: ��� Ȯ��
+--5. 재개동의: 노멀 확인
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
-	 WHERE ȸ������ = 'Normal') D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� LIKE '%�簳����'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE 회원상태 = 'Normal') D	 
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재개동의'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
--- �簳���� �������� ���� Ȯ�� --
+-- 재개동의 결제정보 상태 확인 --
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ, ���ι��, CMS����, CMS�����ڷ����ʿ�
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
-	 WHERE (���ι�� = '�ſ�ī��' AND CARD���� = '���οϷ�')
-		OR (���ι�� = 'CMS' AND CMS���� IN ('�űԿϷ�','�ű�����', '��������', '�����Ϸ�'))
-		OR (���ι�� = 'CMS' AND CMS���� IN ('�űԴ��','�������') AND CMS�����ڷ����ʿ� = 'N')
+	(SELECT 회원번호, 납부방법, CMS상태, CMS증빙자료등록필요
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE (납부방법 = '신용카드' AND CARD상태 = '승인완료')
+		OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료','신규진행', '수정진행', '수정완료'))
+		OR (납부방법 = 'CMS' AND CMS상태 IN ('신규대기','수정대기') AND CMS증빙자료등록필요 = 'N')
 	 ) D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� LIKE '%�簳����'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재개동의'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
 	
---6. �������� - ��� ��/�ֱٳ��� ����: ����¡ Ȯ�� (�߰��ʿ�)
+--6. 결제실패 - 결번 등/최근납부 정보: 프리징 확인 (추가필요)
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
-	 WHERE ȸ������ = 'Freezing') D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� IN ('���', '�������')
-	AND H.��Ϻз� LIKE '%��������%'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE 회원상태 = 'Freezing') D	 
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 IN ('결번', '변경거절')
+	AND H.기록분류 LIKE '%결제실패%'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
 
---7. ���� - �Ŀ����� ���οϷ�/�űԿϷ�/�����ڷ���Ȯ��
+--7. 감사 - 후원동의 승인완료/신규완료/증빙자료등록확인
 
 SELECT *
-FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
-	(SELECT ȸ����ȣ
-	 FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�Ŀ�������
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
 	 WHERE
-	 (���ι�� = '�ſ�ī��' AND CARD���� = '���οϷ�')
-	 OR (���ι�� = 'CMS' AND CMS���� IN ('�űԿϷ�', '�ű�����','�����Ϸ�','��������'))
-	 OR (���ι�� = 'CMS' AND CMS���� = '�űԴ��' AND CMS�����ڷ����ʿ� = 'N')
+	 (납부방법 = '신용카드' AND CARD상태 = '승인완료')
+	 OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료', '신규진행','수정완료','수정진행'))
+	 OR (납부방법 = 'CMS' AND CMS상태 = '신규대기' AND CMS증빙자료등록필요 = 'N')
 	 ) D	 
-ON H.ȸ����ȣ = D.ȸ����ȣ
-WHERE H.��Ϻз��� = '�뼺-�Ŀ�����'
-	AND H.��Ϻз� = 'TM_����'
-	AND H.ó��������� != 'SK-����'
-	AND ������ >= CONVERT(DATE, GETDATE()-5)
-	AND D.ȸ����ȣ IS NULL
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 = '통성-후원동의'
+	AND H.기록분류 = 'TM_감사'
+	AND H.처리진행사항 != 'SK-지연'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
 
---8. �����ð� ���� SK-�Ϸ� �� (�����ð� �� �ҷ��� �� ����)
+--8. 참고시간 누락 SK-완료 건 (참고시간 값 불러올 수 없음)
 
 --SELECT *
---FROM MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_������� H
---WHERE H.ó��������� = 'SK-�Ϸ�'
---	AND ������ >= CONVERT(DATE, GETDATE()-30)
+--FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
+--WHERE H.처리진행사항 = 'SK-완료'
+--	AND 참고일 >= CONVERT(DATE, GETDATE()-30)
 --
--- 	MRM���� �˻�
+-- 	MRM에서 검색
 
---9. ó��������� �߸� �� �� --
+--9. 처리진행사항 잘못 들어간 건 --
 
 SELECT
 	*
 FROM
-	MRMRT.�׸��ǽ����ƽþƼ���繫��0868.dbo.UV_GP_�������
-WHERE ó��������� LIKE 'IH%' 
-	AND ���� LIKE '%WV'
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록
+WHERE 처리진행사항 LIKE 'IH%' 
+	AND 제목 LIKE '%WV'
 
 
