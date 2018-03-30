@@ -10,7 +10,8 @@
 
 -- 1. 통성-변경동의 - 최근승인 확인 --
 
-SELECT '1. 통성-변경동의', H.회원번호, H.참고일
+
+SELECT '1. 통성-변경동의', H.회원번호
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 (SELECT 회원번호, 승인일
@@ -23,10 +24,10 @@ AND CONVERT(DATE,참고일) >= CONVERT(DATE,GETDATE() - 3)
 AND CA.회원번호 IS NULL
 
 
-union all
+
 -- 2. 증액 성공 했는데 증액자 명단에 없는 회원 --
 
-SELECT '2. 증액성공', H.회원번호, H.참고일
+SELECT H.*
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 (SELECT T1.회원번호
@@ -74,8 +75,8 @@ AND T3.회원번호 IS NULL
 
 
 -- 3. 관리기록이 ~거절(해지)인데 캔슬 기록이 없는 회원 --
-union all
-SELECT '3. 거절(해지)', H.회원번호, H.참고일
+
+SELECT *
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT *
@@ -89,23 +90,23 @@ WHERE H.기록분류상세 LIKE '%(해지)'
   AND H2.회원번호 IS NULL
   
 
---4. 재시작동의/재개동의: 노멀 확인
-union all
-SELECT '4. 재시작/재개동의(노멀확인)', H.회원번호, H.참고일
+--4. 재시작동의: 노멀 확인
+
+SELECT *
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
 	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
 	 WHERE 회원상태 = 'Normal') D	 
 ON H.회원번호 = D.회원번호
-WHERE (H.기록분류상세 LIKE '%재시작동의' or H.기록분류상세 LIKE '%재개동의')
+WHERE H.기록분류상세 LIKE '%재시작동의'
 	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
 	AND D.회원번호 IS NULL
 
 
--- 재시작/재개동의 결제정보 상태 확인 -- 
-union all
-SELECT '5. 재시작/재개동의(결제정보)', H.회원번호, H.참고일
+-- 재시작동의 결제정보 상태 확인 -- 
+
+SELECT *
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -115,18 +116,45 @@ LEFT JOIN
 		OR (CMS상태 = '신규대기' AND CMS증빙자료등록필요 = 'N')
 	 ) D	 
 ON H.회원번호 = D.회원번호
-WHERE (H.기록분류상세 LIKE '%재시작동의' or H.기록분류상세 LIKE '%재개동의')
+WHERE H.기록분류상세 LIKE '%재시작동의'
 	AND H.처리진행사항 != 'SK-지연'
 	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
 	AND D.회원번호 IS NULL
 
 -- 재시작동의 결제정보 신규등록 or 증빙자료등록 확인 --
 
+--5. 재개동의: 노멀 확인
+SELECT *
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
+LEFT JOIN
+	(SELECT 회원번호
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE 회원상태 = 'Normal') D	 
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재개동의'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
+
+-- 재개동의 결제정보 상태 확인 --
+
+SELECT *
+FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
+LEFT JOIN
+	(SELECT 회원번호, 납부방법, CMS상태, CMS증빙자료등록필요
+	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
+	 WHERE (납부방법 = '신용카드' AND CARD상태 = '승인완료')
+		OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료','신규진행', '수정진행', '수정완료'))
+		OR (납부방법 = 'CMS' AND CMS상태 IN ('신규대기','수정대기') AND CMS증빙자료등록필요 = 'N')
+	 ) D	 
+ON H.회원번호 = D.회원번호
+WHERE H.기록분류상세 LIKE '%재개동의'
+	AND 참고일 >= CONVERT(DATE, GETDATE()-5)
+	AND D.회원번호 IS NULL
 
 	
 --6. 결제실패 - 결번 등/최근납부 정보: 프리징 확인 (추가필요)
-union all
-SELECT '6. 결제실패-결번/거절(프리징확인)', H.회원번호, H.참고일
+
+SELECT *
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -140,8 +168,8 @@ WHERE H.기록분류상세 IN ('결번', '변경거절')
 
 
 --7. 감사 - 후원동의 승인완료/신규완료/증빙자료등록확인
-union all
-SELECT '7. 감사확인', H.회원번호, H.참고일
+
+SELECT *
 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
 LEFT JOIN
 	(SELECT 회원번호
@@ -169,10 +197,11 @@ WHERE H.기록분류상세 = '통성-후원동의'
 -- 	MRM에서 검색
 
 --9. 처리진행사항 잘못 들어간 건 --
-union all
-SELECT '9. 처리진행사항 오류', H.회원번호, H.참고일
+
+SELECT
+	*
 FROM
-	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록 H
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_관리기록
 WHERE 처리진행사항 LIKE 'IH%' 
 	AND 제목 LIKE '%WV'
 

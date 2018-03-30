@@ -34,8 +34,7 @@ SELECT 'SK0' + CONVERT(VARCHAR,[code_no]) AS code
 	  ,start_date
 into [work].[dbo].[petition_daily_code_sheet1]
 FROM [work].[dbo].[petition_daily_code]
-where source != '카카오-E'
-and start_date = convert(VARCHAR(10),[dbo].[FN_GetNextBusinessDate](getdate())) 
+where start_date = convert(VARCHAR(10),[dbo].[FN_GetNextBusinessDate](getdate())) 
 ORDER BY code
 
 
@@ -55,5 +54,7 @@ FROM [work].[dbo].[petition_daily_code]
 where source = '카카오-E'
 and start_date is null
 ORDER BY code
+
+
 
 
