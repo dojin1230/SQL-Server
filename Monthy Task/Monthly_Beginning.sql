@@ -1,6 +1,5 @@
 use [report]
 GO
-
 -- 0. 저번달에 Mid-Income 때 update해뒀던 upgrade/downgrade 데이터를 삭제한다.
 DELETE FROM
 	[report].[dbo].[upgrade_monthly]
@@ -18,8 +17,7 @@ GO
 INSERT INTO 
 	[report].[dbo].[upgrade_monthly]
 SELECT
-	--UP.회원번호, 'Upgrade_Actual donation' AS 그룹명, UP.차액
-	UP.회원번호, UP.최근납부금액, UP.직전납부금액, UP.차액,-- MONTH(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) AS 월
+	UP.회원번호, UP.최근납부금액, UP.직전납부금액, UP.차액,
 	Year(MP.최근납부일) AS UpgradeYear,
 	Month(MP.최근납부일) AS UpgradeMonth
 FROM
@@ -145,7 +143,17 @@ ON
 WHERE	
 	DW.차액 < 0
 
--- 3. 저번달 Upgrade 후원자들을 그룹에 할당한다.
+-- 3. 월초 작업 세 그룹에 할당할 후원자들을 골라낸다.
+-- 저번달 Upgrade 후원자들과 재시작 동의한 사람들 중 전월에 첫 납부를 한 후원자들을 그룹에 할당한다.
+
+SELECT
+	D.회원번호, 'Status (Stop_tmp→Normal)' AS 그룹명
+FROM
+	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
+WHERE
+	회원상태 = 'Stop_tmp'
+	AND 납부일시중지종료 = SUBSTRING(CONVERT(varchar(10), DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126), 1, 7)
+UNION ALL
 SELECT
 	UP.회원번호, 'Upgrade_Actual donation' AS 그룹명
 FROM
@@ -157,9 +165,7 @@ ON
 WHERE
 	Up.UpgradeMonth = MONTH(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))	-- 업그레이드한 달이 직전달인 사람만
 	AND D.회원상태 = 'Normal'												-- 회원상태 Normal인 사람만
-
-
--- 4. 재시작 동의한 사람들 중 전월에 첫 납부를 한 후원자들을 그룹에 할당한다. 
+UNION ALL
 SELECT
 	A.회원번호, 'Reactivation_Actual donation' AS 그룹명
 FROM
@@ -175,6 +181,7 @@ FROM
 		WHERE
 			기록분류 like N'TM_후원재시작%'
 			AND 기록분류상세=N'통성-재시작동의'
+			AND 참고일 >= '2018-01-01'
 		) H
 	LEFT JOIN
 		MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_결제정보 PR
@@ -194,7 +201,7 @@ WHERE	-- donors whose first payment is last month since they agreed to donate ag
 	AND A.첫결제일 < CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
 	AND D.회원상태 = 'Normal'
 
--- 5. 소프트 프리징 타게팅한다.
+-- 4. 미납회수가 8건인 후원자는 soft freezing하고 저번달에 정기약정이 완료된 후원자는 canceled로 변경한다.
 SELECT
 	DD.회원번호, 
 	'Freezing-insufficient funds' AS [기록분류/상세분류],
@@ -261,10 +268,15 @@ GROUP BY
 HAVING
 	COUNT(DD.회원번호) >= 8
 	AND DD.회원상태 = 'normal'
-
--- 정기납부가 종료된 회원들 Cancel로 변경한다.
+UNION ALL
 SELECT
-	*
+	D.회원번호, 
+	'Cancellation-canceled' AS [기록분류/상세분류],
+	CONVERT(DATE,GETDATE(),126) AS 일자,
+	'IH-완료' AS 구분1,
+	'A' AS 제목,
+	CONVERT(DATE,GETDATE(),126) AS 참고일,
+	NULL AS 미납횟수
 FROM
 	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
 LEFT JOIN
@@ -283,3 +295,31 @@ WHERE
 	D.회원상태 = 'Normal'
 	AND D.최초등록구분 = '정기'
 	AND PL.회원번호 is null
+
+----------------------------------------
+---- 5. 정기납부가 종료된 회원들 Cancel로 변경한다.
+--SELECT
+--	D.회원번호, 
+--	'Cancellation-canceled' AS [기록분류/상세분류],
+--	CONVERT(DATE,GETDATE(),126) AS 일자,
+--	'IH-완료' AS 구분1,
+--	'A' AS 제목,
+--	CONVERT(DATE,GETDATE(),126) AS 참고일
+--FROM
+--	MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보 D
+--LEFT JOIN
+--	(
+--	SELECT
+--		*
+--	FROM
+--		MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원약정금액정보
+--	WHERE
+--		종료년월 = SUBSTRING(CONVERT(VARCHAR(10), GETDATE(), 126), 1, 7) 
+--		OR 상태 in ('대기','진행')
+--	) PL
+--ON
+--	D.회원번호 = PL.회원번호
+--WHERE
+--	D.회원상태 = 'Normal'
+--	AND D.최초등록구분 = '정기'
+--	AND PL.회원번호 is null

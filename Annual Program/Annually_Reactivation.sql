@@ -91,7 +91,8 @@ LEFT JOIN
 ON
 	D.회원번호 = NR.회원번호
 WHERE
-	D.최종납부년월 < '2016-12'					-- Monthly Reactivation 콜이랑 안 겹치도록, 최종납부년월이 2016년 12월 이전인 사람만
+	--D.최종납부년월 < '2016-12'					-- Monthly Reactivation 콜이랑 안 겹치도록, 최종납부년월이 2016년 12월 이전인 사람만
+	D.최종납부년월 < SUBSTRING(CONVERT(varchar(10), DATEADD(month, -13, GETDATE()), 126), 1, 7) -- Monthly Reactivation 콜이랑 안 겹치도록, 최근에 lapsed donor가 된 사람 제외
 	AND D.최초등록구분 = N'정기'					-- 최초등록구분이 정기인 사람만
 	AND D.휴대전화번호='유'						-- 휴대전화번호가 있는 사람만
 	AND D.회원상태 in ('canceled','Freezing')	-- 회원상태가 canceled거나 freezing인 사람만

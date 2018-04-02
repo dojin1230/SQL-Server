@@ -35,26 +35,25 @@ WHERE
 	PR.납부일 >= DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0) AND PR.납부일 < DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0) 	
 GO
 
--- 3. 전월의 mid income 데이터 삭제 
+-- 3. Mid Income 시에 업데이트했던 테이블 삭제 
 DROP TABLE
 	[report].dbo.income_by_cocoa
---WHERE
---	PaidDate >= DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)
 
--- dbo.upgrade_monthly와 dbo.downgrade_monthly가 업데이트 되어 있는지 확인
---SELECT
---	*	
---FROM
---	[report].[dbo].[upgrade_monthly]
---WHERE
---	UpgradeMonth = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
-
---SELECT
---	*
---FROM
---	[report].[dbo].[downgrade_monthly]
---WHERE
---	DowngradeMonth = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
+-- 4. dbo.upgrade_monthly와 dbo.downgrade_monthly가 업데이트 되어 있는지 확인
+SELECT
+	*	
+FROM
+	[report].[dbo].[upgrade_monthly]
+WHERE
+	UpgradeMonth = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
+GO
+SELECT
+	*
+FROM
+	[report].[dbo].[downgrade_monthly]
+WHERE
+	DowngradeMonth = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
+GO
 
 -- 4. 콜을 받고 증액한 사람의 차액 
 -- 142-02-41	Continuing Support	Upgrade	Outsourcing
@@ -399,6 +398,19 @@ UNION ALL
 SELECT 'After' AS Compare, SUM(Amount) AS income FROM [report].dbo.income_by_cocoa 
 GO
 
+-- 환불건의 원래 COCOA 코드를 찾는다.
+SELECT 
+	* 
+FROM 
+	[report].[dbo].[income_account_2018]
+WHERE 
+	ConstituentID in ('82053902', '82052777',  '82000438')  ------------- 환불대상 회원번호를 넣는다.
+
+-- 301 : CMS 정기
+-- 303 : 카드 정기
+-- 311 : CMS 일시
+-- 312 : 카드 일시
+
 -- 환불건 입력하기
 --1월 환불건
 --INSERT INTO [report].dbo.income_by_cocoa VALUES ('Actual', '82000154', '2018-01-05', 'Oneoff', 'Bank transfer', -9123100, '127-01-41', '311') 
@@ -412,12 +424,50 @@ GO
 --GO
 --INSERT INTO [report].dbo.income_by_cocoa VALUES ('Actual', '82009335', '2018-02-12', 'Regular', 'CRD', -30000,	'140-01-41', '303') 
 --GO
+--3월 환불건
+INSERT INTO [report].dbo.income_by_cocoa VALUES ('Actual', '82053902', '2018-03-16', 'Regular', 'Bank transfer', -10000, '128-02-41', '301') 
+GO
+INSERT INTO [report].dbo.income_by_cocoa VALUES ('Actual', '82052777', '2018-03-16', 'Regular', 'Bank transfer', -15000, '140-01-41', '301') 
+GO
+INSERT INTO [report].dbo.income_by_cocoa VALUES ('Actual', '82000438', '2018-03-16', 'Regular', 'Bank transfer', -20000, '140-01-41', '301') 
+GO
+
+---- Mid Income 데이터 삭제
+DELETE FROM
+	[dbo].[income_account_2018]
+WHERE
+	Comparison = 'Actual'
+	AND [Settlement Month] = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
+
+
+---- Finance report/Monthly report에 보이는 COCOA별 금액
+INSERT INTO
+	[report].[dbo].[income_account_2018]
+SELECT 
+	[Comparison],
+	[ConstituentID], 
+	[PaidDate], 
+	Year([PaidDate]) AS [Settlement Year],
+	Month([PaidDate]) AS [Settlement Month],	
+	[Type], 
+	[Paymentmethod], 
+	[Amount] AS [Actual], 
+	NULL AS [Budget],
+	[COCOA],
+	SUBSTRING([COCOA], 1, 3) AS [Budget code], 
+	REPLACE(SUBSTRING([COCOA], 5, 5),'-','') AS [Budget subcode], 
+    [Account code]
+FROM
+	[report].[dbo].income_by_cocoa
+GO
 
 -- 홍콩 데이터 확인
 SELECT
 	*
 FROM
 	[HK].[Korea Report Data].[dbo].[Table_Report_IncomeReport_KR_2018]
+WHERE
+	Month = 'Mar'
 
 -- 홍콩에 데이터 전달하기
 INSERT INTO
@@ -452,34 +502,6 @@ FROM
 	[report].dbo.income_by_cocoa
 GO
 
----- 전월 테이블 백업해두기
-SELECT 
-	*
-INTO 
-	[dbo].[income_account_201801]
-FROM
-	[dbo].[income_account_2018]
-
----- Finance report/Monthly report에 보이는 COCOA별 금액
-INSERT INTO
-	[report].[dbo].[income_account_2018]
-SELECT 
-	[Comparison],
-	[ConstituentID], 
-	[PaidDate], 
-	Year([PaidDate]) AS [Settlement Year],
-	Month([PaidDate]) AS [Settlement Month],	
-	[Type], 
-	[Paymentmethod], 
-	[Amount] AS [Actual], 
-	NULL AS [Budget],
-	[COCOA],
-	SUBSTRING([COCOA], 1, 3) AS [Budget code], 
-	REPLACE(SUBSTRING([COCOA], 5, 5),'-','') AS [Budget subcode], 
-    [Account code]
-FROM
-	[report].[dbo].income_by_cocoa
-GO
 
 
 --INSERT INTO

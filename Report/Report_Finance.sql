@@ -5,10 +5,9 @@ GO
 SELECT
 	*
 INTO
-	[report].[dbo].[finance_details_201801]	
+	[report].[dbo].[finance_details_201802]	
 FROM
 	[report].[dbo].[finance_details]	
-
 
 -- 2. 전월 Income을 Fee/NetIncome 따로 표시하여 finance_details 테이블에 쌓는다.
 INSERT INTO [report].dbo.finance_details
@@ -28,13 +27,13 @@ SELECT
 	WHEN [Payment method] = 'CMS' THEN Fee
 	WHEN [Payment method] = '신용카드' AND [Payment transition result]='Fail' THEN 0
 	WHEN [Payment method] in ('신용카드','계좌이체') AND [Payment transition result]='Success' AND N.주문번호 is null THEN Fee
-	WHEN [Payment method] = '신용카드' AND [Payment transition result]='Success' AND N.주문번호 is not null THEN BC.[차감_수수료]
+	WHEN [Payment method] = '신용카드' AND [Payment transition result]='Success' AND N.주문번호 is not null THEN BC.[차  감_수수료]
 	ELSE 0
 	END AS Fee, 
 	CASE
 	WHEN [Payment transition result]='Fail' THEN 0-Fee 
 	WHEN [Payment transition result]='Success' AND N.주문번호 is null THEN Amount-Fee 
-	WHEN [Payment transition result]='Success' AND N.주문번호 is not null THEN Amount-BC.[차감_수수료]
+	WHEN [Payment transition result]='Success' AND N.주문번호 is not null THEN Amount-BC.[차  감_수수료]
 	END AS [Net income],
 	CASE
 	WHEN [Regular-One-off] = 'One-off' AND [Payment method] = 'GP계좌직접입금' THEN 'Others'
@@ -132,15 +131,69 @@ WHERE
 	PR.[Payment date] >= CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0), 126)
 	AND PR.[Payment date] < CONVERT(DATE, DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0), 126)
 
--- 3. 환불건을 입력한다.
-INSERT INTO [report].dbo.finance_details VALUES (2018,	2,	'2018-02-13', 'Regular', '82032183', 'CMS',	'Success',	-15000,	0,	-15000,	'KFTC') 
+-- 3. 환불건을 입력한다.-------------------------환불년, 환불월, 환불날짜, 정기/수시, 회원번호, 납부방법, Success, 환불금액, 수수료, Netincome, KFTC/Nicepay
+--INSERT INTO [report].dbo.finance_details VALUES (2018,	2,	'2018-02-13', 'Regular', '82032183', 'CMS',	'Success',	-15000,	0,	-15000,	'KFTC') 
+--GO
+--INSERT INTO [report].dbo.finance_details VALUES (2018,	2,	'2018-02-12', 'Regular', '82009335', '신용카드',	'Success',	-30000,	-1089,	-28911,	'Nicepay') 
+--GO
+INSERT INTO [report].dbo.finance_details VALUES (2018,	3,	'2018-03-16', 'Regular', '82053902', 'CMS',	'Success',	-10000,	0,	-10000,	'KFTC') 
 GO
-INSERT INTO [report].dbo.finance_details VALUES (2018,	2,	'2018-02-12', 'Regular', '82009335', '신용카드',	'Success',	-30000,	-1089,	-28911,	'Nicepay') 
+INSERT INTO [report].dbo.finance_details VALUES (2018,	3,	'2018-03-16', 'Regular', '82052777', 'CMS',	'Success',	-15000,	0,	-15000,	'KFTC') 
+GO
+INSERT INTO [report].dbo.finance_details VALUES (2018,	3,	'2018-03-16', 'Regular', '82000438', 'CMS',	'Success',	-20000,	0,	-20000,	'KFTC') 
+GO
+
+-- 4. Acquired Income 테이블을 백업한다.
+
+SELECT
+	*
+INTO
+	[report].[dbo].[acquired_income_201802]
+FROM
+	[report].[dbo].[acquired_income_2018]
 GO
 
 -- 4. Acquired Income 테이블을 update한다.
 INSERT INTO
 	[report].[dbo].[acquired_income_2018]
+SELECT
+	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
+FROM
+	[report].dbo.finance_details F
+LEFT JOIN
+	(
+	SELECT 
+		*
+	FROM
+		[report].[dbo].[supporter_ALC]
+	WHERE
+		Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
+		AND [Year]=2018
+	) ALC
+ON
+	F.Constituent_ID = ALC.ConstituentID
+WHERE
+	ALC.ConstituentID is not null
+	AND F.[Payment month] = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) 
+	AND F.[Payment year] = 2018
+
+--INSERT INTO
+--	[report].[dbo].[acquired_income_2018]
+--SELECT
+--	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
+--FROM
+--	[report].[dbo].[supporter_ALC] ALC
+--LEFT JOIN
+--	[report].dbo.finance_details F
+--ON
+--	F.Constituent_ID = ALC.ConstituentID
+--WHERE
+--	ALC.Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
+--	AND ALC.[Year]=2018
+--	AND ALC.Month = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0)) 
+--	AND F.[Payment year] = 2018
+
+
 SELECT
 	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
 FROM
@@ -152,5 +205,26 @@ ON
 WHERE
 	ALC.Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
 	AND ALC.[Year]=2018
-	AND ALC.Month in (1,2) -----------------저번달 걸로 고칠 것
+	AND ALC.Month = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
+	AND F.[Payment year] = 2018
+
+SELECT
+	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
+FROM
+	[report].dbo.finance_details F
+LEFT JOIN
+	(
+	SELECT 
+		*
+	FROM
+		[report].[dbo].[supporter_ALC]
+	WHERE
+		Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
+		AND [Year]=2018
+	) ALC
+ON
+	F.Constituent_ID = ALC.ConstituentID
+WHERE
+	ALC.ConstituentID is not null
+	AND F.[Payment month] = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
 	AND F.[Payment year] = 2018

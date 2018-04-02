@@ -39,7 +39,7 @@ SELECT
 INTO #001
 FROM [work].[dbo].[kemoji_en_data]
 WHERE Campaign_Data_33 like '%kemoji%' and (Campaign_Data_33 like '%20180315_kakaotwad1%' or Campaign_Data_33 like '%20180315_kakaotwad2%' or
-Campaign_Data_33 like '%20180319_kakaotwad3%' or Campaign_Data_33 like '%20180306_kakaotalkbuddy%' or Campaign_Data_33 like '%20180321_kakaotwad4%')
+Campaign_Data_33 like '%20180319_kakaotwad3%' or Campaign_Data_33 like '%20180306_kakaotalkbuddy%' or Campaign_Data_33 like '%20180321_kakaotwad4%' or Campaign_Data_33 like '%20180328_kakaotalkbuddy2%')
 --and campaign_date <= '2018-03-22' -- 18년 3월 23일 오후 1시 이전 서명자
 
 	-- and utm_term  =''
@@ -96,6 +96,37 @@ SELECT
 	#003.phone_number, #003.korean_name, #003.email, #003.campaign_date, #003.utm_term
 FROM #003
 
-SELECT * FROM [work].[dbo].[kemoji_all]
-WHERE input_date = '2018-03-29'
-	--input_date = CONVERT(DATE, GETDATE())
+
+
+
+	drop table if exists #999
+SELECT case
+	when len(phone) = 8 and left(phone,1) not in ('0','1') then '010'+phone
+	else phone
+	end as [phone],[name],[email]
+into #999
+FROM [work].[dbo].[kemoji_all]
+where input_date between '2018-03-31' and '2018-04-02'  -- 인풋데이트 수정
+
+
+SELECT *,
+	case
+		when len(phone) = 11 and left(phone, 3) in ('010','011','016','017','018','019') and substring(phone,4,1) NOT IN ('0','1') then 'T'
+		when len(phone) = 10 and left(phone, 3) in ('011','016','017','018','019') then 'T'
+		else 'F'
+	end as TF
+from #999
+order by TF,phone
+
+
+
+
+
+
+
+
+  -- where input_date between '2018-03-12' and '2018-03-16' : 3584
+  -- where input_date between '2018-03-17' and '2018-03-21' : 4643
+  -- where input_date between '2018-03-22' and '2018-03-23' : 19939
+  -- where input_date between '2018-03-24' and '2018-03-30' : 2495
+  -- where input_date between '2018-03-31' and '2018-04-02' : 1194
