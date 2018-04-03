@@ -469,6 +469,12 @@ FROM
 WHERE
 	Month = 'Mar'
 
+-- Mid Income 삭제
+DELETE FROM
+	[HK].[Korea Report Data].[dbo].[Table_Report_IncomeReport_KR_2018]
+WHERE
+	Month = 'Mar'
+
 -- 홍콩에 데이터 전달하기
 INSERT INTO
 	[HK].[Korea Report Data].[dbo].[Table_Report_IncomeReport_KR_2018]

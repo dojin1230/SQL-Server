@@ -1,11 +1,14 @@
 USE REPORT
 GO
 -- 원래 데이터 백업 받기
+SELECT 
+	*
+INTO
+	[report].[dbo].[success_rate_201802]
+FROM
+	[report].[dbo].[success_rate]
+
 --
-
-select * from
-	MRMRT.그린피스동아시아서울사무소0868.DBO.UV_GP_후원자정보 D
-
 SELECT -- Non-Reactivation
 	D.회원번호 AS [Constituent_id], 
 	D.가입일 AS [Join Date],
@@ -249,3 +252,13 @@ WHERE
 	H.가입일 < DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
 GROUP BY
 	H.회원번호, H.가입일, PRMIN.최초납부일
+
+-- 홍콩 데이터 백업 받아두기
+
+-- 홍콩에 데이터 넣기
+INSERT INTO 
+	[HK].[Korea Report Data].[dbo].[Table_Report_SuccessRate_KR]
+SELECT 
+	* 
+FROM
+	[report].[dbo].[success_rate]

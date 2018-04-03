@@ -11,16 +11,16 @@ FROM
 
 INSERT INTO [dbo].[regular]
 SELECT
-	'Actual' AS [A vs B], 
-	'South Korea' AS Country,
+	--'Actual' AS [A vs B], 
+	'Korea' AS Country,
 	Year(PMAX.출금일최대값) AS [Debit year], 
 	Month(PMAX.출금일최대값) AS [Debit month], 
 	PMAX.출금일최대값 AS [Debit date], 
-	PMAX.회원코드 AS Constituent_id, 
+	PMAX.회원코드 AS ConstituentID, 
 	CASE
 	WHEN 처리결과 like N'%실패%' THEN 0
 	ELSE 1
-	END AS Response,
+	END AS Success,
 	CASE 
 	WHEN 처리결과 like N'출금%' THEN 'CMS'
 	ELSE 'CRD'
@@ -36,7 +36,7 @@ SELECT
 	WHEN S.가입경로=N'Lead Conversion' THEN S.가입경로
 	WHEN S.가입경로=N'인터넷/홈페이지' THEN 'Web'
 	ELSE 'Others'
-	END AS [Join channel]
+	END AS [Programme]
 FROM
 (
 	SELECT
@@ -85,6 +85,9 @@ SELECT
 	* 
 FROM 
 	[HK].[Korea Report Data].[dbo].[Table_Report_RegularPayment_KR]
+WHERE
+	[DebitYear] = 2018
+	AND [DebitMonth] = 'Mar'
 GO
 
 --3. 홍콩에 데이터 넣기
@@ -92,7 +95,7 @@ GO
 INSERT INTO
 	[HK].[Korea Report Data].[dbo].[Table_Report_RegularPayment_KR]
 SELECT
-	'Korea' AS Region,
+	Region,
 	NULL AS OpportunityID,
 	NULL AS RGID, 
 	ConstituentID, 
@@ -124,4 +127,5 @@ SELECT
  FROM 
 	[report].[dbo].[regular]
  WHERE
-	[DebitDate] < CONVERT(DATETIME, '2017-01-01')
+	[DebitYear] = 2018
+	AND [DebitMonth] =  Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-1, 0))
