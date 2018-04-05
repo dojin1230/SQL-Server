@@ -9,7 +9,7 @@ LEFT JOIN
 	 FROM MRMRT.그린피스동아시아서울사무소0868.dbo.UV_GP_후원자정보
 	 WHERE
 	 (납부방법 = '신용카드' AND CARD상태 = '승인완료')
-	 OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료', '신규진행'))
+	 OR (납부방법 = 'CMS' AND CMS상태 IN ('신규완료', '신규진행', '수정완료'))
 	 OR (납부방법 = 'CMS' AND CMS상태 = '신규대기' AND CMS증빙자료등록필요 = 'N')
 	 ) D	 
 ON H.회원번호 = D.회원번호

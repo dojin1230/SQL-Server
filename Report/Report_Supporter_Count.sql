@@ -152,7 +152,7 @@ FROM
 	[HK].[Korea Report Data].[dbo].[Table_SupporterCount_KR] 
 WHERE
 	 Year=2018
-	 --AND Month = 'Mar'
+	 AND Month = 'Mar'
 
 -- »´ƒ· µ•¿Ã≈Õ ≥÷±‚
 INSERT INTO

@@ -194,37 +194,37 @@ WHERE
 --	AND F.[Payment year] = 2018
 
 
-SELECT
-	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
-FROM
-	[report].[dbo].[supporter_ALC] ALC
-LEFT JOIN
-	[report].dbo.finance_details F
-ON
-	F.Constituent_ID = ALC.ConstituentID
-WHERE
-	ALC.Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
-	AND ALC.[Year]=2018
-	AND ALC.Month = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
-	AND F.[Payment year] = 2018
+--SELECT
+--	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
+--FROM
+--	[report].[dbo].[supporter_ALC] ALC
+--LEFT JOIN
+--	[report].dbo.finance_details F
+--ON
+--	F.Constituent_ID = ALC.ConstituentID
+--WHERE
+--	ALC.Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
+--	AND ALC.[Year]=2018
+--	AND ALC.Month = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
+--	AND F.[Payment year] = 2018
 
-SELECT
-	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
-FROM
-	[report].dbo.finance_details F
-LEFT JOIN
-	(
-	SELECT 
-		*
-	FROM
-		[report].[dbo].[supporter_ALC]
-	WHERE
-		Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
-		AND [Year]=2018
-	) ALC
-ON
-	F.Constituent_ID = ALC.ConstituentID
-WHERE
-	ALC.ConstituentID is not null
-	AND F.[Payment month] = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
-	AND F.[Payment year] = 2018
+--SELECT
+--	F.Fee, F.[Regular-One-off], F.Income,  F.[Net income], F.[Payment year], F.[Payment month], F.Constituent_ID, ALC.Source
+--FROM
+--	[report].dbo.finance_details F
+--LEFT JOIN
+--	(
+--	SELECT 
+--		*
+--	FROM
+--		[report].[dbo].[supporter_ALC]
+--	WHERE
+--		Source in ('Direct Dialogue', 'Lead Conversion', 'Web', 'Other','Reactivation')
+--		AND [Year]=2018
+--	) ALC
+--ON
+--	F.Constituent_ID = ALC.ConstituentID
+--WHERE
+--	ALC.ConstituentID is not null
+--	AND F.[Payment month] = Month(DATEADD(mm, DATEDIFF(mm, 0, GETDATE())-2, 0)) 
+--	AND F.[Payment year] = 2018

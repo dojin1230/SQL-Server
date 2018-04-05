@@ -630,6 +630,8 @@ SELECT
 	[Type]
 FROM
 	[report].dbo.income_by_cocoa
+WHERE
+	Comparison = 'Actual'
 GO
 
 ---- 전월 테이블 백업해두기

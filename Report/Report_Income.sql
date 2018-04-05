@@ -459,6 +459,8 @@ SELECT
     [Account code]
 FROM
 	[report].[dbo].income_by_cocoa
+WHERE
+	Comparison = 'Actual'
 GO
 
 -- 홍콩 데이터 확인
