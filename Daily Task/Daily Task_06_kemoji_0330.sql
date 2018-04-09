@@ -106,7 +106,7 @@ SELECT case
 	end as [phone],[name],[email]
 into #999
 FROM [work].[dbo].[kemoji_all]
-where input_date between '2018-03-31' and '2018-04-02'  -- 인풋데이트 수정
+where input_date between '2018-04-03' and '2018-04-06'  -- 인풋데이트 수정
 
 
 SELECT *,
@@ -130,3 +130,4 @@ order by TF,phone
   -- where input_date between '2018-03-22' and '2018-03-23' : 19939
   -- where input_date between '2018-03-24' and '2018-03-30' : 2495
   -- where input_date between '2018-03-31' and '2018-04-02' : 1194
+  -- where input_date between '2018-04-03' and '2018-04-06' : 2910

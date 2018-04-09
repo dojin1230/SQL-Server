@@ -1,0 +1,147 @@
+﻿-- DBO.BUSINESS_DATE 은행업무기준일로 새로 만들어야 함 (BANK_DATE)
+
+---
+  DROP TABLE IF EXISTS #TMP	
+  DECLARE @START_DATE DATETIME, @END_DATE DATETIME, @CUR_DATE DATETIME
+
+  SET @START_DATE = '2018-01-01'
+  SET @END_DATE = '2018-12-31'
+  SET @CUR_DATE = @START_DATE
+
+  CREATE TABLE #TMP
+  (WEEKDAY VARCHAR(10),
+  DATE VARCHAR(10),
+  day int,
+  month varchar(10),
+  year int,
+  WORK VARCHAR(10),
+  PAYDAY VARCHAR(10)
+  --PAYDAY_CMS VARCHAR(10),
+  --PAYDAY_CARD VARCHAR(10),
+  )
+
+  WHILE @CUR_DATE <= @END_DATE
+  BEGIN
+    INSERT INTO #TMP
+    SELECT DATENAME(DW, @CUR_DATE), CONVERT(VARCHAR(10), @CUR_DATE, 126), datepart(day, @cur_date), datename(month, @cur_date), datepart(year, @cur_date),
+        CASE WHEN EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE, 126) 
+  			 FROM DBO.BUSINESS_DATE BD WHERE CONVERT(VARCHAR(10), @CUR_DATE, 126) = BD.DATE)
+			 THEN 'WORKDAY'
+	    END,
+		CASE WHEN RIGHT(CONVERT(VARCHAR(10), @CUR_DATE, 126), 2) IN ('10', '27')
+				  AND
+				  EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE, 126) 
+  				  FROM DBO.BUSINESS_DATE BD WHERE CONVERT(VARCHAR(10), @CUR_DATE, 126) = BD.DATE)
+				  THEN CONVERT(VARCHAR(10), @CUR_DATE, 126)
+			 WHEN RIGHT(CONVERT(VARCHAR(10), @CUR_DATE, 126), 2) IN ('10', '27')
+			      THEN (SELECT MIN(DATE) FROM DBO.business_date WHERE DATE > @CUR_DATE)
+		END
+    SET @CUR_DATE = DATEADD(DD, 1, @CUR_DATE)
+  END
+
+
+  -------------------
+  DROP TABLE IF EXISTS #TMP2
+  SELECT AAA.WEEKDAY, AAA.DATE, AAA.year, AAA.month, AAA.day, AAA.WORK, BBB.PAYDAY
+  INTO #TMP2
+  FROM #TMP AAA LEFT JOIN #TMP BBB
+  ON AAA.DATE = BBB.PAYDAY
+
+
+  -------------------
+  DROP TABLE IF EXISTS #PAYDAY
+  SELECT PAYDAY
+  INTO #PAYDAY
+  FROM #TMP2 
+  WHERE PAYDAY IS NOT NULL
+  
+----
+
+SELECT * FROM #PAYDAY 
+
+
+------
+
+DROP TABLE IF EXISTS #TMP3	
+  DECLARE @START_DATE2 DATETIME, @END_DATE2 DATETIME, @CUR_DATE2 DATETIME
+
+  SET @START_DATE2 = '2018-01-01'
+  SET @END_DATE2 = '2018-12-31'
+  SET @CUR_DATE2 = @START_DATE2
+
+  CREATE TABLE #TMP3
+  (WEEKDAY VARCHAR(10),
+  DATE VARCHAR(10),
+  day int,
+  month varchar(10),
+  year int,
+  PAYDAY_CMS VARCHAR(10),
+--  PAYDAY_CARD VARCHAR(10),
+  )
+
+  WHILE @CUR_DATE2 <= @END_DATE2
+  BEGIN
+    INSERT INTO #TMP3
+    SELECT DATENAME(DW, @CUR_DATE2), CONVERT(VARCHAR(10), @CUR_DATE2, 126), datepart(day, @CUR_DATE2), datename(month, @CUR_DATE2), datepart(year, @CUR_DATE2),
+        CASE WHEN datepart(day, @CUR_DATE2) <= 9
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126)))) = #PAYDAY.PAYDAY)
+			 THEN '27'
+			 WHEN datepart(day, @CUR_DATE2) <= 9
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126))) = #PAYDAY.PAYDAY)
+			 THEN '27'
+			 WHEN datepart(day, @CUR_DATE2) <= 9
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126)) = #PAYDAY.PAYDAY)
+			 THEN '27'
+			 WHEN datepart(day, @CUR_DATE2) <= 9
+			 THEN '10'
+			 WHEN datepart(day, @CUR_DATE2) BETWEEN 10 AND 26
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126)))) = #PAYDAY.PAYDAY)
+			 THEN '10'
+			 WHEN datepart(day, @CUR_DATE2) BETWEEN 10 AND 26
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126))) = #PAYDAY.PAYDAY)
+			 THEN '10'
+			 WHEN datepart(day, @CUR_DATE2) BETWEEN 10 AND 26
+				  AND EXISTS (SELECT CONVERT(VARCHAR(10), @CUR_DATE2, 126)
+							  FROM #PAYDAY WHERE DBO.FN_GetNextBusinessDate(CONVERT(VARCHAR(10), @CUR_DATE2, 126)) = #PAYDAY.PAYDAY)
+			 THEN '10'
+			 WHEN datepart(day, @CUR_DATE2) BETWEEN 10 AND 26
+			 THEN '27'
+		END
+    SET @CUR_DATE2 = DATEADD(DD, 1, @CUR_DATE2)
+  END
+
+SELECT * FROM #TMP3
+
+
+
+/*
+DAY가 NEXT_PAYDAY - 3 BUSINESSDAY 보다 작으면 10, 
+DAY <= 25 이고,
+DAY >= 26 이면 10 / 10
+
+SELECT DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(getdate())))
+
+*/
+
+/*
+SELECT DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(getdate())))  --오늘+3 업무일
+SELECT DBO.FN_GetNextBusinessDate(DBO.FN_GetNextBusinessDate(getdate()))  --오늘+2 업무일
+SELECT DBO.FN_GetNextBusinessDate(getdate())  --오늘+1 업무일
+
+
+CMS
+10일 이하고 오늘+3업무일이 결제일이면 27 
+10일 이하고 오늘+2업무일이 결제일이면 27
+10일 이하고 오늘+1업무일이 결제일이면 27
+10일 이하고 해당 없으면 10
+
+11일 이상 27일 이하고 오늘+3업무일이 결제일이면 10
+11일 이상 27일 이하고 오늘+2업무일이 결제일이면 10
+11일 이상 27일 이하고 오늘+업무일이 결제일이면 10
+11일 이상 27일 이하고 해당 없으면 27
+*/
